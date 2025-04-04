@@ -7,7 +7,8 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const MongoStore = require("connect-mongo");
 const session = require('express-session');
-
+const compression = require('compression');
+const apiRouter = require('./routes/api/apiRoutes');
 
 
 const mongoURI = process.env.mongoURI;
@@ -19,10 +20,10 @@ mongoose
     maxPoolSize: 50,
   })
   .then(() => {
-    logger.info("Connected to MongoDB");
+    console.log("Connected to MongoDB");
   })
   .catch((error) => {
-    logger.error("Failed to connect to MongoDB:", error);
+    console.error("Failed to connect to MongoDB:", error);
 });
 
 
@@ -32,7 +33,13 @@ mongoose
 app.use(compression());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
-
+// Enable CORS for all routes
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*'); // Allow all origins (replace * with specific domains in production)
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  next();
+}); 
 
 // Session management
 app.use(
@@ -57,6 +64,12 @@ app.get('/', (req, res) => {
     res.send('Hello World!');
 });
 
+// API routes
+app.use("/api", (req, res, next) => {
+  console.log("API route accessed");
+  next();
+}, apiRouter);
+ 
 
 
 app.listen(process.env.PORT, () => {
